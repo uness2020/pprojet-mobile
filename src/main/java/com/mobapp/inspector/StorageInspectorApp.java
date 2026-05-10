@@ -40,7 +40,7 @@ import com.mobapp.inspector.ui.ThemeIcons;
 
 public class StorageInspectorApp extends Application {
 
-    private static final String APP_TITLE = "MobApp-Storage Inspector";
+    private static final String APP_TITLE = "Secure Storage Inspector";
     private static final double WINDOW_WIDTH = 1200;
     private static final double WINDOW_HEIGHT = 800;
     private static final double DIVIDER_POSITION = 0.2;

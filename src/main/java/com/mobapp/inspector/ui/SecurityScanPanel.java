@@ -71,11 +71,11 @@ public class SecurityScanPanel extends VBox {
         setStyle("-fx-background-color: #f8f9fa;");
         
         // Header
-        Label headerLabel = new Label("Mobile Security Scanner");
+        Label headerLabel = new Label("Secure Storage Inspector");
         headerLabel.setFont(Font.font("System", FontWeight.BOLD, 24));
         headerLabel.setTextFill(Color.web("#2c3e50"));
         
-        Label descriptionLabel = new Label("Scan mobile app files for security vulnerabilities, API keys, and sensitive data");
+        Label descriptionLabel = new Label("Scan files for security vulnerabilities, API keys, and sensitive data");
         descriptionLabel.setFont(Font.font("System", 14));
         descriptionLabel.setTextFill(Color.web("#7f8c8d"));
         

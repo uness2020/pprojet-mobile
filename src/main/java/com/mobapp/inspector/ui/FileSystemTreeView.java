@@ -342,7 +342,7 @@ public class FileSystemTreeView extends VBox {
         menuButton.setGraphic(gearIcon);
         menuButton.setTooltip(new Tooltip("Preferences"));
         
-        MenuItem aboutItem = new MenuItem("About MobApp-Storage Inspector...");
+        MenuItem aboutItem = new MenuItem("About Secure Storage Inspector...");
         aboutItem.setOnAction(e -> showAboutDialog());
         
         Menu themeMenu = new Menu("Theme");
@@ -1278,7 +1278,7 @@ public class FileSystemTreeView extends VBox {
     
     private void showAboutDialog() {
         Dialog<Void> dialog = new Dialog<>();
-        dialog.setTitle("About MobApp-Storage Inspector");
+        dialog.setTitle("About Secure Storage Inspector");
         
         VBox content = new VBox(15);
         content.setPadding(new Insets(30));
@@ -1286,13 +1286,13 @@ public class FileSystemTreeView extends VBox {
         content.setMinWidth(450);
         content.setMaxWidth(450);
         
-        Label titleLabel = new Label("MobApp-Storage Inspector");
+        Label titleLabel = new Label("Secure Storage Inspector");
         titleLabel.setStyle("-fx-font-size: 22px; -fx-font-weight: bold;");
         
         Label versionLabel = new Label("Version 1.0");
         versionLabel.setStyle("-fx-font-size: 14px;");
         
-        Label descriptionLabel = new Label("A tool for inspecting and analyzing mobile application storage files.");
+        Label descriptionLabel = new Label("A security-focused tool for analyzing storage files and detecting sensitive data.");
         descriptionLabel.setWrapText(true);
         descriptionLabel.setTextAlignment(javafx.scene.text.TextAlignment.CENTER);
         descriptionLabel.setStyle("-fx-font-size: 14px;");
