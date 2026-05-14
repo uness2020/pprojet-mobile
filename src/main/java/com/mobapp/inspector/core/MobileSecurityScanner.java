@@ -364,18 +364,20 @@ public class MobileSecurityScanner {
             
             // High entropy threshold (> 4.5 bits/char indicates likely secret)
             if (entropy > 4.5) {
-                // Check it's not already found
-                boolean alreadyFound = findings.stream()
-                    .anyMatch(f -> f.getFilePath().equals(filePath) && f.getLineNumber() == lineNumber);
-                
-                if (!alreadyFound) {
-                    findings.add(new SecurityFinding(
-                        "High Entropy String",
-                        "Potential secret (entropy: " + String.format("%.1f", entropy) + "): " + truncate(match, 30),
-                        Severity.MEDIUM,
-                        filePath,
-                        lineNumber
-                    ));
+                // Synchronize check-and-add operation to prevent duplicates
+                synchronized (findings) {
+                    boolean alreadyFound = findings.stream()
+                        .anyMatch(f -> f.getFilePath().equals(filePath) && f.getLineNumber() == lineNumber);
+                    
+                    if (!alreadyFound) {
+                        findings.add(new SecurityFinding(
+                            "High Entropy String",
+                            "Potential secret (entropy: " + String.format("%.1f", entropy) + "): " + truncate(match, 30),
+                            Severity.MEDIUM,
+                            filePath,
+                            lineNumber
+                        ));
+                    }
                 }
             }
         }

@@ -1,0 +1,48 @@
+@echo off
+REM Guide de demarrage - README
+REM Secure Storage Inspector
+
+echo.
+echo ============================================================
+echo SECURE STORAGE INSPECTOR v1.0
+echo Guide de Demarrage
+echo ============================================================
+echo.
+
+echo PREREQUIS:
+echo - Java 17 ou superieur (java -version)
+echo - Maven 3.6+ (mvn --version)
+echo.
+
+echo OPTIONS DE LANCEMENT:
+echo.
+echo 1. PREMIERE FOIS - Compilation necessaire:
+echo    double-cliquez compile-and-prepare.bat
+echo    Cela va compiler tout le projet et afficher les commandes de lancement
+echo.
+echo 2. LANCER L'API REST SEULE:
+echo    double-cliquez start-api-only.bat
+echo    API disponible sur http://localhost:8080/api
+echo.
+echo 3. LANCER L'INTERFACE JAVAFX SEULE:
+echo    double-cliquez start-ui-only.bat
+echo.
+echo 4. VIA MAVEN (mode developpement):
+echo    - Ouvrir 2 terminaux PowerShell
+echo    - Terminal 1 - API:
+echo      mvn compile exec:java -Dexec.mainClass="com.mobapp.inspector.api.RestApiApplication"
+echo    - Terminal 2 - UI:
+echo      mvn javafx:run
+echo.
+
+echo DOCUMENTATION:
+echo - IMPLEMENTATION.md    : Guide complet d'implementation
+echo - API.md              : Documentation API REST
+echo - RÉSUMÉ_IMPLÉMENTATION.md : Resumen des fonctionnalités
+echo.
+
+echo EXEMPLE DE REQUETE API:
+echo   curl http://localhost:8080/api/scans
+echo.
+
+pause

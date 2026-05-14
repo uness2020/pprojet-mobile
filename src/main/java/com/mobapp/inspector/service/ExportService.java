@@ -3,7 +3,6 @@ package com.mobapp.inspector.service;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.mobapp.inspector.core.MobileSecurityScanner.SecurityFinding;
-import com.mobapp.inspector.core.MobileSecurityScanner.Severity;
 import com.mobapp.inspector.database.Scan;
 import com.mobapp.inspector.database.ScanFinding;
 import org.apache.commons.csv.CSVFormat;
