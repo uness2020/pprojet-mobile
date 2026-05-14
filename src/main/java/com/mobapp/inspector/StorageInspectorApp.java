@@ -35,8 +35,8 @@ import javafx.util.Duration;
 
 import com.mobapp.inspector.ui.FileSystemTreeView;
 import com.mobapp.inspector.ui.ContentViewPane;
+import com.mobapp.inspector.ui.ScanHistoryPanel;
 import com.mobapp.inspector.ui.SecurityScanPanel;
-import com.mobapp.inspector.ui.ThemeIcons;
 
 public class StorageInspectorApp extends Application {
 
@@ -71,11 +71,17 @@ public class StorageInspectorApp extends Application {
         fileViewerTab.setContent(contentViewPane);
         contentTabPane.getTabs().add(fileViewerTab);
         
+        ScanHistoryPanel scanHistoryPanel = new ScanHistoryPanel();
+
         // Security Scanner Tab
-        securityScanPanel = new SecurityScanPanel();
+        securityScanPanel = new SecurityScanPanel(scanHistoryPanel::refresh);
         Tab securityTab = new Tab("Security Scanner");
         securityTab.setContent(securityScanPanel);
         contentTabPane.getTabs().add(securityTab);
+
+        Tab historyTab = new Tab("Scan History");
+        historyTab.setContent(scanHistoryPanel);
+        contentTabPane.getTabs().add(historyTab);
         
         // Connect file selection to both panels
         fileSystemTreeView.setOnFileSelectedListener(file -> {

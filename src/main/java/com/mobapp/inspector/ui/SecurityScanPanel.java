@@ -4,6 +4,10 @@ import com.mobapp.inspector.core.MobileSecurityScanner;
 import com.mobapp.inspector.core.MobileSecurityScanner.SecurityFinding;
 import com.mobapp.inspector.core.MobileSecurityScanner.Severity;
 import com.mobapp.inspector.core.MobileSecurityScanner.ScanProgress;
+import com.mobapp.inspector.database.DatabaseService;
+import com.mobapp.inspector.database.Scan;
+import com.mobapp.inspector.database.ScanFinding;
+import com.mobapp.inspector.service.ExportService;
 
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
@@ -27,9 +31,10 @@ import javafx.util.Duration;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.sql.SQLException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
 import java.util.*;
-import java.util.function.Consumer;
 
 /**
  * SecurityScanPanel - UI component for displaying mobile security scan results.
@@ -50,8 +55,14 @@ public class SecurityScanPanel extends VBox {
     private File currentDirectory;
     private VBox progressPanel;
     private PieChart findingsChart;
+    private final Runnable onScanPersisted;
     
     public SecurityScanPanel() {
+        this(null);
+    }
+
+    public SecurityScanPanel(Runnable onScanPersisted) {
+        this.onScanPersisted = onScanPersisted;
         scanner = new MobileSecurityScanner();
         scanner.setProgressCallback(this::onScanProgress);
         initializeUI();
@@ -384,6 +395,7 @@ public class SecurityScanPanel extends VBox {
         
         Thread scanThread = new Thread(() -> {
             List<SecurityFinding> findings = scanner.scanDirectory(directory);
+            persistScan(directory, true, findings);
             Platform.runLater(() -> {
                 findingsList.addAll(findings);
                 updateSummary(findings);
@@ -404,6 +416,7 @@ public class SecurityScanPanel extends VBox {
         Thread scanThread = new Thread(() -> {
             List<SecurityFinding> findings = new ArrayList<>();
             scanner.scanFile(file, findings);
+            persistScan(file, false, findings);
             Platform.runLater(() -> {
                 findingsList.addAll(findings);
                 updateSummary(findings);
@@ -500,6 +513,7 @@ public class SecurityScanPanel extends VBox {
         fileChooser.getExtensionFilters().addAll(
             new FileChooser.ExtensionFilter("CSV Files", "*.csv"),
             new FileChooser.ExtensionFilter("JSON Files", "*.json"),
+            new FileChooser.ExtensionFilter("PDF Files", "*.pdf"),
             new FileChooser.ExtensionFilter("Text Files", "*.txt")
         );
         
@@ -519,6 +533,9 @@ public class SecurityScanPanel extends VBox {
                     break;
                 case "json":
                     exportToJSON(file);
+                    break;
+                case "pdf":
+                    exportToPDF(file);
                     break;
                 default:
                     exportToText(file);
@@ -592,7 +609,87 @@ public class SecurityScanPanel extends VBox {
             }
         }
     }
-    
+
+    private void exportToPDF(File file) throws IOException {
+        String scannedPath = "";
+        if (currentDirectory != null) {
+            scannedPath = currentDirectory.getAbsolutePath();
+        } else if (!findingsList.isEmpty() && findingsList.get(0).getFilePath() != null) {
+            File fp = new File(findingsList.get(0).getFilePath());
+            scannedPath = fp.getParent() != null ? fp.getParent() : fp.getAbsolutePath();
+        }
+        ExportService.exportSecurityFindingsToPdf(
+            new ArrayList<>(findingsList),
+            file.toPath(),
+            "Security scan report",
+            scannedPath
+        );
+    }
+
+    private void persistScan(File target, boolean isDirectory, List<SecurityFinding> findings) {
+        DatabaseService db = new DatabaseService();
+        try {
+            Scan scan = buildScanRecord(target, isDirectory, findings);
+            long scanId = db.saveScan(scan);
+            db.saveFindings(scanId, toScanFindings(findings));
+            db.updateScanStatus(scanId, "COMPLETED", null);
+        } catch (SQLException e) {
+            Platform.runLater(() ->
+                showErrorMessage("Could not save scan to database: " + e.getMessage()));
+        } finally {
+            db.close();
+            if (onScanPersisted != null) {
+                Platform.runLater(onScanPersisted);
+            }
+        }
+    }
+
+    private Scan buildScanRecord(File target, boolean isDirectory, List<SecurityFinding> findings) {
+        String label = (isDirectory ? "Dir: " : "File: ") + target.getName();
+        Scan scan = new Scan(label, target.getAbsolutePath());
+        long distinctPaths = findings.stream()
+            .map(SecurityFinding::getFilePath)
+            .filter(Objects::nonNull)
+            .distinct()
+            .count();
+        scan.setTotalFiles(isDirectory ? Math.max(1, distinctPaths) : 1L);
+        EnumMap<Severity, Long> counts = new EnumMap<>(Severity.class);
+        for (Severity s : Severity.values()) {
+            counts.put(s, 0L);
+        }
+        for (SecurityFinding f : findings) {
+            if (f.getSeverity() != null) {
+                counts.merge(f.getSeverity(), 1L, Long::sum);
+            }
+        }
+        scan.setCriticalCount(counts.getOrDefault(Severity.CRITICAL, 0L));
+        scan.setHighCount(counts.getOrDefault(Severity.HIGH, 0L));
+        scan.setMediumCount(counts.getOrDefault(Severity.MEDIUM, 0L));
+        scan.setLowCount(counts.getOrDefault(Severity.LOW, 0L));
+        scan.setInfoCount(counts.getOrDefault(Severity.INFO, 0L));
+        scan.setStatus("COMPLETED");
+        scan.setScanDate(LocalDateTime.now());
+        return scan;
+    }
+
+    private List<ScanFinding> toScanFindings(List<SecurityFinding> findings) {
+        List<ScanFinding> list = new ArrayList<>();
+        for (SecurityFinding f : findings) {
+            ScanFinding sf = new ScanFinding();
+            sf.setFindingType(f.getType());
+            sf.setSeverity(f.getSeverity() != null ? f.getSeverity().name() : "INFO");
+            sf.setFilePath(f.getFilePath() != null ? f.getFilePath() : "");
+            sf.setLineNumber(f.getLineNumber());
+            String desc = f.getDescription();
+            if (desc != null && desc.length() > 8000) {
+                desc = desc.substring(0, 8000);
+            }
+            sf.setMatchedText(desc != null ? desc : "");
+            list.add(sf);
+        }
+        return list;
+    }
+
     private void openFileInSystem(String filePath) {
         try {
             File file = new File(filePath);
